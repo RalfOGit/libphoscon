@@ -68,11 +68,8 @@ namespace libralfogit {
             const json_object_entry* const getElements     (void) const { return value; }                       ///< Get child elements for this json object. 
             const unsigned int             getNumElements  (void) const { return length; }                      ///< Get number of child elements for this json object.
             std::string                    getValueAsString(void) const { return "SORRY NOT IMPLEMENTED"; }     ///< Get a string representation for this json object => not yet implemented.
-            const json_object_entry& operator[](size_t index) const { return value[index]; }                    ///< Array access operator [] for this json object.
-            const JsonValue at(const std::string& key) const {
-                return getValue(value, length, key, NULL);
-            }
-            const JsonValue operator[](const std::string& key) const {
+            const json_object_entry& operator[](size_t index)     const { return value[index]; }                ///< Array index access operator [] for this json object.
+            const JsonValue operator[](const std::string& key)    const {                                       ///< Array dictionary access operator [] for this json object.
                 return getValue(value, length, key, NULL);
             }
 
@@ -105,7 +102,7 @@ namespace libralfogit {
             const json_value** const getElements     (void) const { return (const json_value** const)value; }   ///< Get child elements for this json array. 
             const unsigned int       getNumElements  (void) const { return length; }                            ///< Get number of child elements for this json array.
             std::string              getValueAsString(void) const { return "SORRY NOT IMPLEMENTED"; }           ///< Get a string representation for this json array => not yet implemented.
-            const json_value& operator[](size_t index) { return (*value)[index]; }                              ///< Array access operator [] for this json array.
+            const json_value& operator[](size_t index)      const { return *(value[index]); }                   ///< Array index access operator [] for this json array.
 
             class iterator {
             public:
@@ -216,6 +213,14 @@ namespace libralfogit {
                 value_int(jvalue),
                 value_double(jvalue),
                 type(jvalue != NULL ? jvalue->type : json_none) {}
+            JsonValue(const json_object_entry* const jvalue = NULL) :
+                value_object(jvalue),
+                value_array(jvalue),
+                value_string(jvalue),
+                value_boolean(jvalue),
+                value_int(jvalue),
+                value_double(jvalue),
+                type(jvalue != NULL ? json_object : json_none) {}
 
             const json_type    getType (void) const { return type; }           ///< Get type of this json value.
 

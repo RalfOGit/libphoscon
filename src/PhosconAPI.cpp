@@ -241,7 +241,7 @@ std::map<std::string, JsonCpp::JsonObject> PhosconAPI::getEntityObjects(const Ph
  * @return the value of the leaf key value pair
  */
 std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string& device, const std::string& path) const {
-    std::string result_value;
+    std::string result;
 
     // send http get api request
     std::string response, content;
@@ -257,43 +257,37 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
         // declare name comparators for json nodes and json leafs
         struct NameComparator {
             static bool compare_node_names(const std::string& lhs, const std::string& rhs) { return compareNames(lhs, rhs, true); }
-            static bool compare_leaf_names(const std::string& lhs, const std::string& rhs) { return compareNames(lhs, rhs, false); }
+            static bool compare_leaf_names(const std::string& lhs, const std::string& rhs) { return compareNames(lhs, rhs, true); }
         };
-        
+
         // traverse path
-        const json_object_entry* values = NULL;
-        size_t                   length = 0;
-        if (path_segments.size() > 1 && json->type == json_object) {
-            values = json->u.object.values;
-            length = json->u.object.length;
-            for (size_t i = 0; i < path_segments.size() - 1; ++i) {
-                const JsonCpp::JsonNamedValue node = JsonCpp::getValue(values, length, path_segments[i], NameComparator::compare_node_names);
-                if (node.isArray()) {
-                    if (i + 1 < path_segments.size() - 1) {
-                        std::string path_index = path_segments[++i];
+        if (json != NULL && json->type != json_null && json->type != json_none) {
+            JsonCpp::JsonValue traveler(json);
+
+            if (path_segments.size() > 1) {
+                for (size_t i = 0; i < path_segments.size() - 1; ++i) {
+                    if (traveler.isObject()) {
+                        traveler = JsonCpp::getValue(traveler.asObject(), path_segments[i], NameComparator::compare_node_names);
+                    }
+                    else if (traveler.isArray()) {
                         int index = 0;
-                        if (sscanf(path_index.c_str(), "%d", &index) == 1) {
-                            values = node.asArray().getElements()[index]->u.object.values;
-                            length = node.asArray().getElements()[index]->u.object.length;
+                        if (sscanf(path_segments[i].c_str(), "%d", &index) == 1) {
+                            traveler = JsonCpp::JsonValue(&traveler.asArray()[index]);
                         }
                     }
-                }
-                else if (node.isObject()) {
-                    values = node.asObject().getElements();
-                    length = node.asObject().getNumElements();
-                }
-                else {
-                    break;
+                    else {
+                        break;
+                    }
                 }
             }
-        }
-        if (values != NULL && length != 0 && path_segments.size() > 0) {
-            JsonCpp::JsonNamedValue leaf = JsonCpp::getValue(values, length, path_segments[path_segments.size()-1], NameComparator::compare_leaf_names);
-            result_value = leaf;
+            if (path_segments.size() > 0 && traveler.isObject()) {
+                JsonCpp::JsonNamedValue leaf = JsonCpp::getValue(traveler.asObject(), path_segments[path_segments.size() - 1], NameComparator::compare_leaf_names);
+                result = (std::string)leaf;
+            }
         }
         json_value_free(json);
     }
-    return result_value;
+    return result;
 }
 
 
