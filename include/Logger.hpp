@@ -1,5 +1,5 @@
-#ifndef _LIBTASMOTA_LOGGER_HPP_
-#define _LIBTASMOTA_LOGGER_HPP_
+#ifndef _LIBRALFOGIT_LOGGER_HPP_
+#define _LIBRALFOGIT_LOGGER_HPP_
 
 #include <string>
 #include <cstdarg>
@@ -7,7 +7,7 @@
 #ifdef LIB_NAMESPACE
 namespace LIB_NAMESPACE {
 #else
-namespace libphoscon {
+namespace libralfogit {
 #endif
 
     /*! \file */

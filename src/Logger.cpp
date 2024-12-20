@@ -5,7 +5,7 @@
 #ifdef LIB_NAMESPACE
 using namespace LIB_NAMESPACE;
 #else
-using namespace libphoscon;
+using namespace libralfogit;
 #endif
 
 //#define PRINT_TIMESTAMP

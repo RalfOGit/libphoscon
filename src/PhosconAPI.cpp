@@ -30,7 +30,7 @@
 #include <PhosconAPI.hpp>
 #include <HttpClient.hpp>
 #include <Url.hpp>
-#include <JsonCppWrapper.hpp>
+#include <JsonCpp.hpp>
 #include <Logger.hpp>
 #include <locale>
 
@@ -65,20 +65,20 @@ std::vector<PhosconGW> PhosconAPI::discover(void) {
 
         // traverse through json tree; expected is an array of gateways with properties for each gateway
         logger("discover:\n");
-        for (const auto gateway : JsonCppWrapper::JsonArray(json)) {
-            if (gateway.getType() == json_object) {
+        for (const auto gateway : JsonCpp::JsonArray(json)) {
+            if (gateway.isObject()) {
                 const auto gw = gateway.asObject();
                 for (const auto property : gw) {
                     logger("  %s: \"%s\"\n", property.getName().c_str(), property.getValueAsString().c_str());
                 }
                 logger("\n");
 
-                std::string id                = gw["id"].getValueAsString();
-                std::string name              = gw["name"].getValueAsString();
-                std::string internalipaddress = gw["internalipaddress"].getValueAsString();
-                std::string internalport      = gw["internalport"].getValueAsString();
-                std::string macaddress        = gw["macaddress"].getValueAsString();
-                std::string publicipaddress   = gw["publicipaddress"].getValueAsString();
+                std::string id                = gw["id"].asString();
+                std::string name              = gw["name"].asString();
+                std::string internalipaddress = gw["internalipaddress"].asString();
+                std::string internalport      = gw["internalport"].asInt();
+                std::string macaddress        = gw["macaddress"].asString();
+                std::string publicipaddress   = gw["publicipaddress"].asString();
                 result.push_back(PhosconGW(id, name, internalipaddress, internalport, macaddress, publicipaddress));
             }
         }
@@ -94,7 +94,6 @@ std::vector<PhosconGW> PhosconAPI::discover(void) {
 const std::string PhosconAPI::unlockApi(const PhosconGW& gw, const std::string& devicetype) {
 
     // send http post api request
-    HttpClient http_client;
     std::string request_data = "{ \"devicetype\": \"" + devicetype + "\" }";
     std::string response, content;
     int http_return_code = HttpClient().sendHttpPostRequest(gw.getUrl(), request_data, response, content);
@@ -104,40 +103,25 @@ const std::string PhosconAPI::unlockApi(const PhosconGW& gw, const std::string& 
         json_value* json = json_parse(content.c_str(), content.length());
 
         // traverse json tree; expected is an array with one element "success" or "error" 
-        if (json != NULL && json->type == json_array) {
-            _json_value** array_values = json->u.array.values;
-            if (array_values != NULL) {
-                unsigned int array_length = json->u.array.length;
-                for (unsigned int i = 0; i < array_length; ++i) {
-                    JsonCppWrapper::JsonNamedValueVector level0_values = JsonCppWrapper::getNamedValues(array_values[i]);
-                    if (level0_values.size() > 0 && level0_values[0].getType() == json_object) {
-                        std::string result = level0_values[0].getName();
-                        JsonCppWrapper::JsonObject object = level0_values[0].asObject();
-                        const json_object_entry* elements = object.getElements();
-                        unsigned int         num_elements = object.getNumElements();
-                        JsonCppWrapper::JsonNamedValueVector level1_values = JsonCppWrapper::getNamedValues(elements, num_elements);
-                        logger("unlockApi: %s\n", result.c_str());
-                        for (const auto& value : level1_values) {
-                            logger("  %s: \"%s\"\n", value.getName().c_str(), value.getString().getValue().c_str());
-                        }
-                        if (result == "error") {
-                            JsonCppWrapper::JsonNamedValue description = JsonCppWrapper::getValue(elements, num_elements, "description", NULL);
-                            if (description.getType() == json_string) {
-                                return description.getString().getValue();
-                            }
-                        }
-                        if (result == "success") {
-                            JsonCppWrapper::JsonNamedValue username = JsonCppWrapper::getValue(elements, num_elements, "username", NULL);
-                            if (username.getType() == json_string) {
-                                return username.getString().getValue();
-                                //username: "3F99BC34D3"
-                                //username: "609D5F1A34"
-                            }
-                        }
-                        //JsonCppWrapper::JsonNamedValueVector level1_values = JsonCppWrapper::getNamedValues(elements, num_elements);
-                        return "unlockApi: unexpected result " + result;
+        for (const auto element : JsonCpp::JsonArray(json)) {
+            if (element.getType() == json_object) {
+                JsonCpp::JsonNamedValueVector result_values = JsonCpp::getNamedValues(element.asObject());
+                JsonCpp::JsonNamedValue result_value0 = result_values[0];
+                std::string result = result_value0.getName();
+                logger("unlockApi: %s\n", result.c_str());
+                if (result_value0.isObject()) {
+                    JsonCpp::JsonObject details(result_value0.asObject());
+                    for (const auto& detail : details) {
+                        logger("  %s: \"%s\"\n", detail.getName().c_str(), detail.getValueAsString().c_str());
+                    }
+                    if (result == "error") {
+                        return details["description"].asString();
+                    }
+                    if (result == "success") {
+                        return details["username"].asString();      // example username: "609D5F1A34"
                     }
                 }
+                return "unlockApi: unexpected result " + result;
             }
         }
         json_value_free(json);
@@ -163,8 +147,8 @@ std::vector<std::string> PhosconAPI::getDevices(const PhosconGW& gw) const {
         json_value* json = json_parse(content.c_str(), content.length());
 
         // traverse json tree; expected is an array with one string element for each zigbee entity
-        for (const auto id : JsonCppWrapper::JsonArray(json)) {
-            if (id.getType() == json_string) {
+        for (const auto id : JsonCpp::JsonArray(json)) {
+            if (id.isString()) {
                 std::string str = id.asString().getValueAsString();
                 devices.push_back(str);
             }
@@ -194,18 +178,18 @@ std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string&
 
         // traverse json tree; expected is an object with device and subdevice properties
         if (json != NULL && json->type == json_object) {
-            JsonCppWrapper::JsonObject device(json);
+            JsonCpp::JsonObject device(json);
 
-            std::string name = device["name"].getValueAsString();
+            std::string name = device["name"].asString();
             summary.append(name).append(" - ");
 
             summary.append("subdevices: ");
-            JsonCppWrapper::JsonArray subdevices = device["subdevices"].asArray();
+            JsonCpp::JsonArray subdevices = device["subdevices"].asArray();
             for (auto subdevice : subdevices) {
                 // traverse subdevice properties
-                if (subdevice.getType() == json_object) {
-                    JsonCppWrapper::JsonObject props = subdevice.asObject();
-                    std::string type = props["type"].getValueAsString();
+                if (subdevice.isObject()) {
+                    JsonCpp::JsonObject props = subdevice.asObject();
+                    std::string type = props["type"].asString();
                     summary.append(type).append("  ");
                 }
             }
@@ -222,8 +206,8 @@ std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string&
  * @param qualified name of the zigbee entity (e.g. devices, lights, sensors, ...
  * @return a map of module id and module name pairs
  */
-std::map<std::string, JsonCppWrapper::JsonObject> PhosconAPI::getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const {
-    std::map<std::string, JsonCppWrapper::JsonObject> entities;
+std::map<std::string, JsonCpp::JsonObject> PhosconAPI::getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const {
+    std::map<std::string, JsonCpp::JsonObject> entities;
 
     // send http get api request
     std::string response, content;
@@ -235,11 +219,10 @@ std::map<std::string, JsonCppWrapper::JsonObject> PhosconAPI::getEntityObjects(c
 
         // traverse json tree; expected is an object with one element for each zigbee entity
         if (json != NULL && json->type == json_object) {
-            const json_object_entry* elements = json->u.object.values;
-            unsigned int         num_elements = json->u.object.length;
-            JsonCppWrapper::JsonNamedValueVector objects = JsonCppWrapper::getNamedValues(elements, num_elements);
+            JsonCpp::JsonObject jsonobject(json);
+            JsonCpp::JsonNamedValueVector objects = JsonCpp::getNamedValues(jsonobject);
             for (const auto& object : objects) {
-                entities[object.getName()] = object.getObject();
+                entities[object.getName()] = object.asObject();
             }
         }
         json_value_free(json);
@@ -258,7 +241,7 @@ std::map<std::string, JsonCppWrapper::JsonObject> PhosconAPI::getEntityObjects(c
  * @return the value of the leaf key value pair
  */
 std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string& device, const std::string& path) const {
-    std::string value;
+    std::string result_value;
 
     // send http get api request
     std::string response, content;
@@ -284,20 +267,20 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
             values = json->u.object.values;
             length = json->u.object.length;
             for (size_t i = 0; i < path_segments.size() - 1; ++i) {
-                const JsonCppWrapper::JsonNamedValue node = JsonCppWrapper::getValue(values, length, path_segments[i], NameComparator::compare_node_names);
-                if (node.getType() == json_array) {
+                const JsonCpp::JsonNamedValue node = JsonCpp::getValue(values, length, path_segments[i], NameComparator::compare_node_names);
+                if (node.isArray()) {
                     if (i + 1 < path_segments.size() - 1) {
                         std::string path_index = path_segments[++i];
                         int index = 0;
                         if (sscanf(path_index.c_str(), "%d", &index) == 1) {
-                            values = node.getArray().getElements()[index]->u.object.values;
-                            length = node.getArray().getElements()[index]->u.object.length;
+                            values = node.asArray().getElements()[index]->u.object.values;
+                            length = node.asArray().getElements()[index]->u.object.length;
                         }
                     }
                 }
-                else if (node.getType() == json_object) {
-                    values = node.getObject().getElements();
-                    length = node.getObject().getNumElements();
+                else if (node.isObject()) {
+                    values = node.asObject().getElements();
+                    length = node.asObject().getNumElements();
                 }
                 else {
                     break;
@@ -305,53 +288,12 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
             }
         }
         if (values != NULL && length != 0 && path_segments.size() > 0) {
-            JsonCppWrapper::JsonNamedValue leaf = JsonCppWrapper::getValue(values, length, path_segments[path_segments.size()-1], NameComparator::compare_leaf_names);
-            value = leaf.getValueAsString();
+            JsonCpp::JsonNamedValue leaf = JsonCpp::getValue(values, length, path_segments[path_segments.size()-1], NameComparator::compare_leaf_names);
+            result_value = leaf.getValueAsString(); // use getValueAsString() to handle all kinds of JsonValues
         }
         json_value_free(json);
     }
-    return value;
-}
-
-
-/**
- * Get the value for the given name from the given json tree.
- * @param json the json tree
- * @param name the name of the name value pair
- * @return the value of the name value pair
- */
-std::string PhosconAPI::getValueFromJson(const json_value* const json, const std::string& name) {
-    if (json != NULL) {
-
-        // analyze the json response
-        const JsonCppWrapper::JsonNamedValueVector roots = JsonCppWrapper::getNamedValues(json);
-        const JsonCppWrapper::JsonNamedValue&      root  = roots[0];
-        if (compareNames(root.getName(), name, false)) {
-            if (root.getType() == json_object) {
-                const json_object_entry* elements = root.getObject().getElements();
-                int64_t              num_elements = root.getObject().getNumElements();
-                for (int i = 0; i < num_elements; ++i) {
-                    const json_object_entry& element = elements[i];
-                    const std::string        name    = std::string(element.name);
-                    switch (element.value->type) {
-                    case json_string:   return JsonCppWrapper::JsonString(&element).getValue();
-                    case json_double:   return JsonCppWrapper::JsonDouble(&element).getValueAsString();
-                    case json_integer:  return JsonCppWrapper::JsonInt   (&element).getValueAsString();
-                    case json_boolean:  return JsonCppWrapper::JsonBool  (&element).getValueAsString();
-                    case json_null:     return "null";
-                    }
-                }
-            }
-            switch (root.getType()) {
-            case json_string:   return root.getString().getValue();
-            case json_double:   return root.getDouble().getValueAsString();
-            case json_integer:  return root.getInt   ().getValueAsString();
-            case json_boolean:  return root.getBool  ().getValueAsString();
-            case json_null:     return "null";
-            }
-        }
-    }
-    return "";
+    return result_value;
 }
 
 
@@ -415,8 +357,7 @@ bool PhosconAPI::compareNames(const std::string& name1, const std::string& name2
 
 /**
  * Segment a given key path into a vector of path segments.
- * The key path is a string containing path segments, separated by ':' characters. The path is defining
- * the traversal through the result of a "Status 0" command to the tasmota device.
+ * The key path is a string containing path segments, separated by ':' characters.
  * @param key the key path of the key value pair. e.g. "StatusSNS:ENERGY:Power" to get the power consumption
  * @return a vector containing path segments, e.g. "StatusSNS", "ENERGY", "Power"
  */

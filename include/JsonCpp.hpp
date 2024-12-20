@@ -1,5 +1,5 @@
-#ifndef __LIBTASMOTA_JSONCPPWRAPPER_HPP__
-#define __LIBTASMOTA_JSONCPPWRAPPER_HPP__
+#ifndef __LIBRALFOGIT_JSONCPPWRAPPER_HPP__
+#define __LIBRALFOGIT_JSONCPPWRAPPER_HPP__
 
 /*
  * Copyright(C) 2022 RalfO. All rights reserved.
@@ -38,7 +38,7 @@
 #ifdef LIB_NAMESPACE
 namespace LIB_NAMESPACE {
 #else
-namespace libphoscon {
+namespace libralfogit {
 #endif
 
     /**
@@ -46,10 +46,7 @@ namespace libphoscon {
      * (see https://github.com/json-parser/json-parser).
      * It implements 
      */
-    class JsonCppWrapper {
-    private:
-        //JsonCppWrapper(void) {}
-        //~JsonCppWrapper(void) {}
+    class JsonCpp {
 
     public:
         class JsonValue;
@@ -136,6 +133,7 @@ namespace libphoscon {
             JsonString(const json_object_entry* const entry) : JsonString((entry != NULL ? entry->value : NULL)) {}
             const std::string& getValue(void)         const { return value; }                       ///< Get string value for this json string.
             const std::string& getValueAsString(void) const { return value; }                       ///< Get string value for this json string. Same as getValue().
+            operator std::string() const { return getValueAsString(); }
         };
 
         /** Class encapsulating a json integer value. */
@@ -155,6 +153,7 @@ namespace libphoscon {
                 snprintf(buffer, sizeof(buffer), "%lld", value);
                 return buffer;
             }
+            operator std::string () const { return getValueAsString(); }
         };
 
         /** Class encapsulating a json double value. */
@@ -174,6 +173,7 @@ namespace libphoscon {
                 snprintf(buffer, sizeof(buffer), "%lf", value);
                 return buffer;
             }
+            operator std::string() const { return getValueAsString(); }
         };
 
         /** Class encapsulating a json boolean value. */
@@ -191,6 +191,7 @@ namespace libphoscon {
             std::string getValueAsString(void) const {                                              ///< Get string representation for this json boolean.
                 return (value == false ? std::string("false") : std::string("true"));
             }
+            operator std::string() const { return getValueAsString(); }
         };
 
         /**
@@ -216,20 +217,23 @@ namespace libphoscon {
                 value_double(jvalue),
                 type(jvalue != NULL ? jvalue->type : json_none) {}
 
-            const JsonObject&  getObject(void) const { return value_object; }   ///< Get object value of this json name value pair.
-            const JsonArray&   getArray (void) const { return value_array; }    ///< Get array value of this json name value pair.
-            const JsonString&  getString(void) const { return value_string; }   ///< Get string value of this json name value pair.
-            const JsonBool&    getBool  (void) const { return value_boolean; }  ///< Get boolean value of this json name value pair.
-            const JsonInt&     getInt   (void) const { return value_int; }      ///< Get integer value of this json name value pair.
-            const JsonDouble&  getDouble(void) const { return value_double; }   ///< Get double value of this json name value pair.
-            const json_type    getType  (void) const { return type; }           ///< Get type of this json name value pair.
-            const JsonObject&  asObject(void) const { return value_object; }   ///< Get object value of this json name value pair.
-            const JsonArray&   asArray (void) const { return value_array; }    ///< Get array value of this json name value pair.
-            const JsonString&  asString(void) const { return value_string; }   ///< Get string value of this json name value pair.
-            const JsonBool&    asBool  (void) const { return value_boolean; }  ///< Get boolean value of this json name value pair.
-            const JsonInt&     asInt   (void) const { return value_int; }      ///< Get integer value of this json name value pair.
-            const JsonDouble&  asDouble(void) const { return value_double; }   ///< Get double value of this json name value pair.
-            const json_type    asType  (void) const { return type; }           ///< Get type of this json name value pair.
+            const json_type    getType (void) const { return type; }           ///< Get type of this json value.
+
+            const JsonObject&  asObject(void) const { return value_object; }   ///< Get object value of this json value.
+            const JsonArray&   asArray (void) const { return value_array; }    ///< Get array value of this json value.
+            const JsonString&  asString(void) const { return value_string; }   ///< Get string value of this json value.
+            const JsonBool&    asBool  (void) const { return value_boolean; }  ///< Get boolean value of this json value.
+            const JsonInt&     asInt   (void) const { return value_int; }      ///< Get integer value of this json value.
+            const JsonDouble&  asDouble(void) const { return value_double; }   ///< Get double value of this json value.
+
+            const bool isNull  (void) const { return type == json_null; }
+            const bool isNone  (void) const { return type == json_none; }
+            const bool isObject(void) const { return type == json_object; }
+            const bool isArray (void) const { return type == json_array; }
+            const bool isString(void) const { return type == json_string; }
+            const bool isBool  (void) const { return type == json_boolean; }
+            const bool isInt   (void) const { return type == json_integer; }
+            const bool isDouble(void) const { return type == json_double; }
 
             /**
             * Get the value of this json name value pair converted to a string.
@@ -278,9 +282,8 @@ namespace libphoscon {
         */
         static JsonNamedValueVector getNamedValues(const json_value* const json) {
             if (json != NULL && json->type == json_object) {
-                json_object_entry* elements = json->u.object.values;
-                unsigned int   num_elements = json->u.object.length;
-                return getNamedValues(elements, num_elements);
+                JsonObject object(json);
+                return getNamedValues(object);
             }
             return JsonNamedValueVector();
         }
@@ -302,6 +305,21 @@ namespace libphoscon {
             return named_variants;
         }
 
+        /**
+        * Get a vector of json named value pairs from the given json object.
+        * @param object json object instance
+        * @return a vector of json named value pairs, or an empty vector
+        */
+        static JsonNamedValueVector getNamedValues(const JsonObject& object) {
+            JsonNamedValueVector named_variants;
+            named_variants.reserve(object.getNumElements());
+            for (const auto& element : object) {
+                named_variants.push_back(element);
+            }
+            return named_variants;
+        }
+
+
         typedef bool (*compare)(const std::string& lhs, const std::string& rhs);
 
         /**
@@ -312,7 +330,7 @@ namespace libphoscon {
         * @param name_comparator a function pointer to an optional name comparater method, or NULL
         * @return a json named value pair, or an empty named value pair
         */
-        static JsonNamedValue getValue(const json_object_entry* const elements, const size_t num_elements, const std::string& name, compare name_comparator) {
+        static JsonNamedValue getValue(const json_object_entry* const elements, const size_t num_elements, const std::string& name, compare name_comparator = NULL) {
             if (elements != NULL) {
                 for (size_t i = 0; i < num_elements; ++i) {
                     std::string element_name(elements[i].name, elements[i].name_length);
@@ -325,6 +343,23 @@ namespace libphoscon {
             return JsonNamedValue(NULL);
         }
 
+        /**
+        * Get a json named value from the given json tree level.
+        * @param object  pointer to a json object entries
+        * @param name the name of the json named value pair to search for
+        * @param name_comparator a function pointer to an optional name comparater method, or NULL
+        * @return a json named value pair, or an empty named value pair
+        */
+        static JsonNamedValue getValue(const JsonObject& object, const std::string& name, compare name_comparator = NULL) {
+            for (const auto element : object) {
+                std::string element_name(element.getName());
+                if (name_comparator == NULL && element_name == name ||
+                    name_comparator != NULL && name_comparator(element_name, name) == true) {
+                    return element;
+                }
+            }
+            return JsonNamedValue(NULL);
+        }
     };
 
 }   // namespace libphoscon

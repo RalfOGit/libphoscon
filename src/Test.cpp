@@ -21,23 +21,27 @@ int main(int argc, char** argv) {
 
     // check if we already have access, if not acquire an api key
     if (gateway.getApiKey() == "") {
-        api.unlockApi(gateway, "Phoscon2InfluxDB");
+        std::string apikey = api.unlockApi(gateway, "Phoscon2InfluxDB");
+        logger("apikey : %s\n", apikey.c_str());
     }
 
     // get api url
     auto url = gateway.getApiUrl();
+    logger("ApiUrl : %s\n\n", url.c_str());
 
     // get list of all zigbee device ids; these are mac addresses
     auto devices = api.getDevices(gateway);
 
     // iterate through all devices and print what they are
-    logger("devices:\n");
+    logger("Devices:\n");
     for (const auto& device : devices) {
         logger("  %s: %s\n", device.c_str(), api.getDeviceSummary(gateway, device).c_str());
     }
+    logger("\n");
 
     // get power consumption from power meter
     auto power = api.getValueFromPath(gateway, "70:b3:d5:2b:60:0b:bf:bd", "subdevices:1:state:power:value");
+    logger("70:b3:d5:2b:60:0b:bf:bd => subdevices:1:state:power:value : %s\n", power.c_str());
 
     return 0;
 }

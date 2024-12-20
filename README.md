@@ -1,7 +1,7 @@
 # libtasmota
 A simplistic C++ library to access zigbee devices through a phoscon gateway.
 
-This library is work in progress and will always be. It provides just the functionality that I need for my own applications. For a complete implementation of the phoscon rest api, please refer to official github repository https://github.com/dresden-elektronik/deconz-rest-plugin.
+This library is work in progress and will always be. It provides just the functionality that I need for my own applications. For a complete implementation of the phoscon rest api, please refer to the official github repository https://github.com/dresden-elektronik/deconz-rest-plugin.
 
 libphoscon is self-contained, i.e. it does not have any external library dependencies. Cudos to the very small footprint json parser written by James McLaughlin: https://github.com/udp/json-parser, which is included in the library.
 

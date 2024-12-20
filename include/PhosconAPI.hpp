@@ -32,7 +32,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <JsonCppWrapper.hpp>
+#include <JsonCpp.hpp>
 #include <PhosconGW.hpp>
 
 #ifdef LIB_NAMESPACE
@@ -48,7 +48,6 @@ namespace libphoscon {
 
     protected:
 
-        static std::string getValueFromJson(const json_value* const json, const std::string& name);
         static bool compareNames(const std::string& name1, const std::string& name2, const bool strict);
         static std::vector<std::string> getPathSegments(const std::string& path);
 
@@ -69,13 +68,13 @@ namespace libphoscon {
         std::vector<std::string> getDevices(const PhosconGW& gw) const;
         std::string getDeviceSummary(const PhosconGW& gw, const std::string& device) const;
 
-        std::map<std::string, JsonCppWrapper::JsonObject> getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const;
+        std::map<std::string, JsonCpp::JsonObject> getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const;
 
-        std::map<std::string, JsonCppWrapper::JsonObject> getLights (const PhosconGW& gw) const { return getEntityObjects(gw, "lights");  };
-        std::map<std::string, JsonCppWrapper::JsonObject> getSensors(const PhosconGW& gw) const { return getEntityObjects(gw, "sensors"); };
-        std::map<std::string, JsonCppWrapper::JsonObject> getGroups (const PhosconGW& gw) const { return getEntityObjects(gw, "groups");  };
-        std::map<std::string, JsonCppWrapper::JsonObject> getScenes (const PhosconGW& gw) const { return getEntityObjects(gw, "scenes");  };
-        std::map<std::string, JsonCppWrapper::JsonObject> getRules  (const PhosconGW& gw) const { return getEntityObjects(gw, "rules");   };
+        std::map<std::string, JsonCpp::JsonObject> getLights (const PhosconGW& gw) const { return getEntityObjects(gw, "lights");  };
+        std::map<std::string, JsonCpp::JsonObject> getSensors(const PhosconGW& gw) const { return getEntityObjects(gw, "sensors"); };
+        std::map<std::string, JsonCpp::JsonObject> getGroups (const PhosconGW& gw) const { return getEntityObjects(gw, "groups");  };
+        std::map<std::string, JsonCpp::JsonObject> getScenes (const PhosconGW& gw) const { return getEntityObjects(gw, "scenes");  };
+        std::map<std::string, JsonCpp::JsonObject> getRules  (const PhosconGW& gw) const { return getEntityObjects(gw, "rules");   };
 
         // Set accessor methods.
         std::string setValue(const std::string& name, const std::string& value);    // e.g. "Power", can be used if name is well-known and documented
