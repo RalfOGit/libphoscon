@@ -250,6 +250,7 @@ namespace libralfogit {
                 }
                 return "INVALID";
             }
+            operator std::string() const { return getValueAsString(); }
         };
 
         /**

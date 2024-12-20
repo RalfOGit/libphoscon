@@ -73,12 +73,12 @@ std::vector<PhosconGW> PhosconAPI::discover(void) {
                 }
                 logger("\n");
 
-                std::string id                = gw["id"].asString();
-                std::string name              = gw["name"].asString();
-                std::string internalipaddress = gw["internalipaddress"].asString();
-                std::string internalport      = gw["internalport"].asInt();
-                std::string macaddress        = gw["macaddress"].asString();
-                std::string publicipaddress   = gw["publicipaddress"].asString();
+                std::string id                = gw["id"];
+                std::string name              = gw["name"];
+                std::string internalipaddress = gw["internalipaddress"];
+                std::string internalport      = gw["internalport"];
+                std::string macaddress        = gw["macaddress"];
+                std::string publicipaddress   = gw["publicipaddress"];
                 result.push_back(PhosconGW(id, name, internalipaddress, internalport, macaddress, publicipaddress));
             }
         }
@@ -115,10 +115,10 @@ const std::string PhosconAPI::unlockApi(const PhosconGW& gw, const std::string& 
                         logger("  %s: \"%s\"\n", detail.getName().c_str(), detail.getValueAsString().c_str());
                     }
                     if (result == "error") {
-                        return details["description"].asString();
+                        return details["description"];
                     }
                     if (result == "success") {
-                        return details["username"].asString();      // example username: "609D5F1A34"
+                        return details["username"];      // example username: "609D5F1A34"
                     }
                 }
                 return "unlockApi: unexpected result " + result;
@@ -149,7 +149,7 @@ std::vector<std::string> PhosconAPI::getDevices(const PhosconGW& gw) const {
         // traverse json tree; expected is an array with one string element for each zigbee entity
         for (const auto id : JsonCpp::JsonArray(json)) {
             if (id.isString()) {
-                std::string str = id.asString().getValueAsString();
+                std::string str = id;
                 devices.push_back(str);
             }
         }
@@ -180,7 +180,7 @@ std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string&
         if (json != NULL && json->type == json_object) {
             JsonCpp::JsonObject device(json);
 
-            std::string name = device["name"].asString();
+            std::string name = device["name"];
             summary.append(name).append(" - ");
 
             summary.append("subdevices: ");
@@ -189,7 +189,7 @@ std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string&
                 // traverse subdevice properties
                 if (subdevice.isObject()) {
                     JsonCpp::JsonObject props = subdevice.asObject();
-                    std::string type = props["type"].asString();
+                    std::string type = props["type"];
                     summary.append(type).append("  ");
                 }
             }
@@ -289,7 +289,7 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
         }
         if (values != NULL && length != 0 && path_segments.size() > 0) {
             JsonCpp::JsonNamedValue leaf = JsonCpp::getValue(values, length, path_segments[path_segments.size()-1], NameComparator::compare_leaf_names);
-            result_value = leaf.getValueAsString(); // use getValueAsString() to handle all kinds of JsonValues
+            result_value = leaf;
         }
         json_value_free(json);
     }
