@@ -270,9 +270,12 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
                         traveler = JsonCpp::getValue(traveler.asObject(), path_segments[i], NameComparator::compare_node_names);
                     }
                     else if (traveler.isArray()) {
-                        int index = 0;
-                        if (sscanf(path_segments[i].c_str(), "%d", &index) == 1) {
+                        unsigned int index = 0;
+                        if (sscanf(path_segments[i].c_str(), "%u", &index) == 1 && index < traveler.asArray().getNumElements()) {
                             traveler = JsonCpp::JsonValue(&traveler.asArray()[index]);
+                        }
+                        else {
+                            break;
                         }
                     }
                     else {
