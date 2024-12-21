@@ -50,8 +50,8 @@ namespace libphoscon {
         std::string macAddress;
         std::string publicIpAddress;
         std::string url;
-        std::string apiKey;
         std::string apiUrl;
+        std::string apiKey;
 
     public:
         PhosconGW(const std::string& _id, const std::string& _name, const std::string& _internalIpAddress,
@@ -64,7 +64,7 @@ namespace libphoscon {
             publicIpAddress(_publicIpAddress) {
             url = "http://" + internalIpAddress + ":" + internalPort + "/api";
             apiUrl = url + "/";
-            setApiKey("609D5F1A34");
+            apiKey = "";
         }
 
         const std::string& getId               (void) const { return id; }

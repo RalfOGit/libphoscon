@@ -58,19 +58,27 @@ namespace libralfogit {
             json_object_entry* value;   ///< pointer to an array of json_object_entry elements
             unsigned int       length;  ///< number of json_object_entry elements in the array
         public:
-            JsonObject(const json_value* const jvalue = NULL) : value(NULL), length(0) {                        /// Constructor. @param pointer to the json_object_entry in the json tree
+            JsonObject(const json_value* const jvalue = NULL) : value(NULL), length(0) {                            /// Constructor. @param pointer to the json_object_entry in the json tree
                 if (jvalue != NULL && jvalue->type == json_object) {
                     value  = jvalue->u.object.values;
                     length = jvalue->u.object.length;
                 }
             }
             JsonObject(const json_object_entry* const entry) : JsonObject((entry != NULL ? entry->value : NULL)) {} /// Constructor. @param pointer to the json_object_entry in the json tree
-            const json_object_entry* const getElements     (void) const { return value; }                       ///< Get child elements for this json object. 
-            const unsigned int             getNumElements  (void) const { return length; }                      ///< Get number of child elements for this json object.
-            std::string                    getValueAsString(void) const { return "SORRY NOT IMPLEMENTED"; }     ///< Get a string representation for this json object => not yet implemented.
-            const json_object_entry& operator[](size_t index)     const { return value[index]; }                ///< Array index access operator [] for this json object.
-            const JsonValue operator[](const std::string& key)    const {                                       ///< Array dictionary access operator [] for this json object.
+            const json_object_entry* const c_ptr   (void) const { return value; }                                   ///< Pointer to child elements in this json object. 
+            const unsigned int             c_length(void) const { return length; }                                  ///< Number of child elements in this json object.
+
+            size_t               size      (void)                   const { return length; }                        ///< Number of key value pairs in  this json object.
+            const JsonNamedValue operator[](size_t index)           const { return JsonNamedValue(&value[index]); } ///< Array index operator [] for this json object.
+            const JsonNamedValue operator[](const std::string& key) const {                                         ///< Array dictionary operator [] for this json object.
                 return getValue(value, length, key, NULL);
+            }
+            operator std::string() const {                                                                          ///< String representation for this json object.
+                std::string result = "{";
+                for (auto value : *this) {
+                    result.append(result.size() > 1 ? "," : "").append((std::string)value);
+                }
+                return result.append("}");
             }
 
             class iterator {
@@ -92,17 +100,25 @@ namespace libralfogit {
             json_value** value;     ///< pointer to an array of json_value elements
             unsigned int length;    ///< number of json_value elements in the array
         public:
-            JsonArray(const json_value* const jvalue = NULL) : value(NULL), length(0) {                          /// Constructor. @param pointer to the json_object_entry in the json tree
+            JsonArray(const json_value* const jvalue = NULL) : value(NULL), length(0) {                 /// Constructor. @param pointer to the json_object_entry in the json tree
                 if (jvalue != NULL && jvalue->type == json_array) {
                     value  = jvalue->u.array.values;
                     length = jvalue->u.array.length;
                 }
             }
             JsonArray(const json_object_entry* const entry = NULL) : JsonArray((entry != NULL ? entry->value : NULL)) {} /// Constructor. @param pointer to the json_object_entry in the json tree
-            const json_value** const getElements     (void) const { return (const json_value** const)value; }   ///< Get child elements for this json array. 
-            const unsigned int       getNumElements  (void) const { return length; }                            ///< Get number of child elements for this json array.
-            std::string              getValueAsString(void) const { return "SORRY NOT IMPLEMENTED"; }           ///< Get a string representation for this json array => not yet implemented.
-            const json_value& operator[](size_t index)      const { return *(value[index]); }                   ///< Array index access operator [] for this json array.
+            const json_value** const c_ptr   (void) const { return (const json_value** const)value; }   ///< Pointer to values in this json array.
+            const unsigned int       c_length(void) const { return length; }                            ///< Get number of child elements for this json object.
+
+            size_t            size(void)               const { return length; }                         ///< Number of values in this json array.
+            const JsonValue   operator[](size_t index) const { return JsonValue((value[index])); }      ///< Array index operator [] for this json array.
+            operator std::string() const {                                                              ///< String representation for this json array.
+                std::string result = "[";
+                for (auto value : *this) {
+                    result.append(result.size() > 1 ? "," : "").append((std::string)value);
+                }
+                return result.append("]");
+            }
 
             class iterator {
             public:
@@ -244,18 +260,17 @@ namespace libralfogit {
             * Get the value of this json name value pair converted to a string.
             * @return the value as string
             */
-            std::string getValueAsString(void) const {
+            operator std::string() const { 
                 switch (type) {
-                case json_object:  return value_object.getValueAsString();
-                case json_string:  return value_string.getValueAsString();
-                case json_boolean: return value_boolean.getValueAsString();
-                case json_integer: return value_int.getValueAsString();
-                case json_double:  return value_double.getValueAsString();
-                case json_array:   return value_array.getValueAsString();
+                case json_object:  return (std::string)value_object;
+                case json_string:  return (std::string)value_string;
+                case json_boolean: return (std::string)value_boolean;
+                case json_integer: return (std::string)value_int;
+                case json_double:  return (std::string)value_double;
+                case json_array:   return (std::string)value_array;
                 }
                 return "INVALID";
             }
-            operator std::string() const { return getValueAsString(); }
         };
 
         /**
@@ -318,7 +333,7 @@ namespace libralfogit {
         */
         static JsonNamedValueVector getNamedValues(const JsonObject& object) {
             JsonNamedValueVector named_variants;
-            named_variants.reserve(object.getNumElements());
+            named_variants.reserve(object.size());
             for (const auto& element : object) {
                 named_variants.push_back(element);
             }

@@ -20,6 +20,7 @@ int main(int argc, char** argv) {
     PhosconGW& gateway = gw[0];
 
     // check if we already have access, if not acquire an api key
+    gateway.setApiKey("609D5F1A34");
     if (gateway.getApiKey() == "") {
         std::string apikey = api.unlockApi(gateway, "Phoscon2InfluxDB");
         logger("apikey : %s\n", apikey.c_str());

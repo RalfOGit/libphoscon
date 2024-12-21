@@ -69,7 +69,7 @@ std::vector<PhosconGW> PhosconAPI::discover(void) {
             if (gateway.isObject()) {
                 const auto gw = gateway.asObject();
                 for (const auto property : gw) {
-                    logger("  %s: \"%s\"\n", property.getName().c_str(), property.getValueAsString().c_str());
+                    logger("  %s: \"%s\"\n", property.getName().c_str(), ((std::string)property).c_str());
                 }
                 logger("\n");
 
@@ -112,7 +112,7 @@ const std::string PhosconAPI::unlockApi(const PhosconGW& gw, const std::string& 
                 if (result_value0.isObject()) {
                     JsonCpp::JsonObject details(result_value0.asObject());
                     for (const auto& detail : details) {
-                        logger("  %s: \"%s\"\n", detail.getName().c_str(), detail.getValueAsString().c_str());
+                        logger("  %s: \"%s\"\n", detail.getName().c_str(), ((std::string)detail).c_str());
                     }
                     if (result == "error") {
                         return details["description"];
@@ -271,8 +271,8 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
                     }
                     else if (traveler.isArray()) {
                         unsigned int index = 0;
-                        if (sscanf(path_segments[i].c_str(), "%u", &index) == 1 && index < traveler.asArray().getNumElements()) {
-                            traveler = JsonCpp::JsonValue(&traveler.asArray()[index]);
+                        if (sscanf(path_segments[i].c_str(), "%u", &index) == 1 && index < traveler.asArray().size()) {
+                            traveler = traveler.asArray()[index];
                         }
                         else {
                             break;
