@@ -70,13 +70,13 @@ namespace libralfogit {
 
             size_t               size      (void)                   const { return length; }                        ///< Number of key value pairs in  this json object.
             const JsonNamedValue operator[](size_t index)           const { return JsonNamedValue(&value[index]); } ///< Array index operator [] for this json object.
-            const JsonNamedValue operator[](const std::string& key) const {                                         ///< Array dictionary operator [] for this json object.
+            const JsonValue      operator[](const std::string& key) const {                                         ///< Array dictionary operator [] for this json object.
                 return getValue(value, length, key, NULL);
             }
             operator std::string() const {                                                                          ///< String representation for this json object.
                 std::string result = "{";
                 for (auto value : *this) {
-                    result.append(result.size() > 1 ? "," : "").append((std::string)value);
+                    result.append(result.size() > 1 ? "," : "").append(std::string(value));
                 }
                 return result.append("}");
             }
@@ -115,7 +115,7 @@ namespace libralfogit {
             operator std::string() const {                                                              ///< String representation for this json array.
                 std::string result = "[";
                 for (auto value : *this) {
-                    result.append(result.size() > 1 ? "," : "").append((std::string)value);
+                    result.append(result.size() > 1 ? "," : "").append(std::string(value));
                 }
                 return result.append("]");
             }
@@ -136,57 +136,54 @@ namespace libralfogit {
         /** Class encapsulating a json string value. */
         class JsonString {
         protected:
-            std::string value;      ///< json string value converted from the json_object_entry
+            std::string value;                                                      ///< json string value converted from the json_object_entry
         public:
-            JsonString(const json_value* const jvalue = NULL) : value("INVALID") {                  /// Constructor. @param pointer to the json_value in the json tree
+            JsonString(const json_value* const jvalue = NULL) : value("INVALID") {  /// Constructor. @param pointer to the json_value in the json tree
                 if (jvalue != NULL && jvalue->type == json_string) {
                     value = std::string(jvalue->u.string.ptr, jvalue->u.string.length);
                 }
             }
             JsonString(const json_object_entry* const entry) : JsonString((entry != NULL ? entry->value : NULL)) {}
-            const std::string& getValue(void)         const { return value; }                       ///< Get string value for this json string.
-            const std::string& getValueAsString(void) const { return value; }                       ///< Get string value for this json string. Same as getValue().
-            operator std::string() const { return getValueAsString(); }
+            const    std::string& getValue(void) const { return value; }            ///< Get string value for this json string.
+            operator std::string          (void) const { return getValue(); }       ///< Get string value for this json string. Same as getValue().
         };
 
         /** Class encapsulating a json integer value. */
         class JsonInt {
         protected:
-            long long value;                                                                        ///< json integer value copied from the json_object_entry
+            long long value;                                                        ///< json integer value copied from the json_object_entry
         public:
-            JsonInt(const json_value* const jvalue = NULL) : value(-99999999) {                     /// Constructor. @param pointer to the json_value in the json tree
+            JsonInt(const json_value* const jvalue = NULL) : value(-99999999) {     /// Constructor. @param pointer to the json_value in the json tree
                 if (jvalue != NULL && jvalue->type == json_integer) {
                     value = jvalue->u.integer;
                 }
             }
             JsonInt(const json_object_entry* const entry) : JsonInt((entry != NULL ? entry->value : NULL)) {}    /// Constructor. @param pointer to the json_object_entry in the json tree
-            long long   getValue        (void) const { return value; }                              ///< Get value of this json integer.
-            std::string getValueAsString(void) const {                                              ///< Get string representation for this json integer.
+            long long getValue   (void) const { return value; }                     ///< Get value of this json integer.
+            operator  std::string(void) const {                                     ///< Get string representation for this json integer.
                 char buffer[64];
                 snprintf(buffer, sizeof(buffer), "%lld", value);
                 return buffer;
             }
-            operator std::string () const { return getValueAsString(); }
         };
 
         /** Class encapsulating a json double value. */
         class JsonDouble {
         protected:
-            double value;                                                                           ///< json double value copied from the json_object_entry
+            double value;                                                           ///< json double value copied from the json_object_entry
         public:
-            JsonDouble(const json_value* const jvalue = NULL) : value(-99999999) {                  /// Constructor. @param pointer to the json_object_entry in the json tree
+            JsonDouble(const json_value* const jvalue = NULL) : value(-99999999) {  /// Constructor. @param pointer to the json_object_entry in the json tree
                 if (jvalue != NULL && jvalue->type == json_double) {
                     value = jvalue->u.dbl;
                 }
             }
             JsonDouble(const json_object_entry* const entry) : JsonDouble((entry != NULL ? entry->value : NULL)) {} /// Constructor. @param pointer to the json_object_entry in the json tree
-            double      getValue        (void) const { return value; }                              ///< Get value of this json double.
-            std::string getValueAsString(void) const {                                              ///< Get string representation for this json double.
+            double   getValue   (void) const { return value; }                      ///< Get value of this json double.
+            operator std::string(void) const {                                      ///< Get string representation for this json double.
                 char buffer[64];
                 snprintf(buffer, sizeof(buffer), "%lf", value);
                 return buffer;
             }
-            operator std::string() const { return getValueAsString(); }
         };
 
         /** Class encapsulating a json boolean value. */
@@ -194,17 +191,16 @@ namespace libralfogit {
         protected:
             bool value;
         public:
-            JsonBool(const json_value* const jvalue = NULL) : value(false) {                         /// Constructor. @param pointer to the json_object_entry in the json tree
+            JsonBool(const json_value* const jvalue = NULL) : value(false) {        /// Constructor. @param pointer to the json_object_entry in the json tree
                 if (jvalue != NULL && jvalue->type == json_boolean) {
                     value = jvalue->u.boolean;
                 }
             }
             JsonBool(const json_object_entry* const entry) : JsonBool((entry != NULL ? entry->value : NULL)) {} /// Constructor. @param pointer to the json_object_entry in the json tree
-            bool        getValue        (void) const { return value; }                              ///< Get value of this json boolean.
-            std::string getValueAsString(void) const {                                              ///< Get string representation for this json boolean.
-                return (value == false ? std::string("false") : std::string("true"));
+            bool     getValue   (void) const { return value; }                      ///< Get value of this json boolean.
+            operator std::string(void) const {                                      ///< Get string representation for this json boolean.
+                return (value == false ? "false" : "true");
             }
-            operator std::string() const { return getValueAsString(); }
         };
 
         /**
@@ -262,12 +258,13 @@ namespace libralfogit {
             */
             operator std::string() const { 
                 switch (type) {
-                case json_object:  return (std::string)value_object;
-                case json_string:  return (std::string)value_string;
-                case json_boolean: return (std::string)value_boolean;
-                case json_integer: return (std::string)value_int;
-                case json_double:  return (std::string)value_double;
-                case json_array:   return (std::string)value_array;
+                case json_object:  return std::string(value_object);
+                case json_string:  return std::string(value_string);
+                case json_boolean: return std::string(value_boolean);
+                case json_integer: return std::string(value_int);
+                case json_double:  return std::string(value_double);
+                case json_array:   return std::string(value_array);
+                case json_null:    return "null";
                 }
                 return "INVALID";
             }
@@ -290,7 +287,9 @@ namespace libralfogit {
                     name = "INVALID";
                 }
             }
-            const std::string& getName(void) const { return name; }
+            const    std::string getName (void) const { return name; }
+            const    JsonValue   getValue(void) const { return JsonValue(*this); }
+            operator std::string         (void) const { return getName() + ":" + JsonValue::operator std::string(); }
         };
 
         /// Type definition for a vector of json named value pairs

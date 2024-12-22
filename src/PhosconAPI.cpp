@@ -284,8 +284,8 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
                 }
             }
             if (path_segments.size() > 0 && traveler.isObject()) {
-                JsonCpp::JsonNamedValue leaf = JsonCpp::getValue(traveler.asObject(), path_segments[path_segments.size() - 1], NameComparator::compare_leaf_names);
-                result = (std::string)leaf;
+                JsonCpp::JsonValue leaf = JsonCpp::getValue(traveler.asObject(), path_segments[path_segments.size() - 1], NameComparator::compare_leaf_names);
+                result = std::string(leaf);
             }
         }
         json_value_free(json);
