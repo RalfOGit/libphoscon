@@ -1,5 +1,5 @@
-#ifndef __LIBRALFOGIT_JSONCPPWRAPPER_HPP__
-#define __LIBRALFOGIT_JSONCPPWRAPPER_HPP__
+#ifndef __LIBRALFOGIT_JSONCPP_HPP__
+#define __LIBRALFOGIT_JSONCPP_HPP__
 
 /*
  * Copyright(C) 2022 RalfO. All rights reserved.
@@ -382,6 +382,6 @@ namespace libralfogit {
         }
     };
 
-}   // namespace libphoscon
+}   // namespace libralfogit
 
 #endif

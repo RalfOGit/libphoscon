@@ -6,6 +6,7 @@ cmake_minimum_required (VERSION 3.8)
 set(CMAKE_CXX_STANDARD 11)
 
 project ("phoscon")
+message("PROJECT_NAME ${PROJECT_NAME}")
 
 #
 # Target:  ${PROJECT_NAME}  =>  create phoscon.lib or libphoscon.a
@@ -18,11 +19,12 @@ set(COMMON_SOURCES
     src/Url.cpp
 )
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
+set(LIBRARY_OUTPUT_PATH "${CMAKE_BINARY_DIR}/lib")
 
-add_library(${PROJECT_NAME} STATIC
-    ${COMMON_SOURCES})
+add_library(${PROJECT_NAME} STATIC ${COMMON_SOURCES})
+
 target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIR})
-
+target_link_libraries(phoscon)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     LIB_NAMESPACE=libphoscon
 )
