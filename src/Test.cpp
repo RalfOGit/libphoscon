@@ -41,8 +41,11 @@ int main(int argc, char** argv) {
     logger("\n");
 
     // get power consumption from power meter
-    auto power = api.getValueFromPath(gateway, "70:b3:d5:2b:60:0b:bf:bd", "subdevices:1:state:power:value");
-    logger("70:b3:d5:2b:60:0b:bf:bd => subdevices:1:state:power:value : %s\n", power.c_str());
+    auto powermeter1 = api.getValueFromPath(gateway, "70:b3:d5:2b:60:0b:bf:bd", "subdevices:1:state:power:value");
+    logger("70:b3:d5:2b:60:0b:bf:bd => subdevices:1:state:power:value : %s\n", powermeter1.c_str());
+
+    auto powermeter2 = api.getValueFromPath(gateway, "70:b3:d5:2b:60:0b:be:0e", "subdevices:1:state:power:value");
+    logger("70:b3:d5:2b:60:0b:be:0e => subdevices:1:state:power:value : %s\n", powermeter2.c_str());
 
     return 0;
 }

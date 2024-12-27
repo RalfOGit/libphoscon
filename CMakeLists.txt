@@ -47,9 +47,9 @@ target_compile_definitions(${PROJECT_NAME}_test PRIVATE
 )
 
 if (MSVC)
-target_link_libraries(${PROJECT_NAME}_test phoscon.lib ws2_32.lib Iphlpapi.lib)
+target_link_libraries(${PROJECT_NAME}_test ${LIBRARY_OUTPUT_PATH}/phoscon.lib ws2_32.lib Iphlpapi.lib)
 else()
-target_link_libraries(${PROJECT_NAME}_test ${CMAKE_SOURCE_DIR}/build/libphoscon.a)
+target_link_libraries(${PROJECT_NAME}_test ${LIBRARY_OUTPUT_PATH}/libphoscon.a)
 endif()
 
 set_target_properties(${PROJECT_NAME}

@@ -66,6 +66,7 @@ namespace libphoscon {
         std::string getValueFromPath(const PhosconGW& gw, const std::string& device, const std::string& path) const;   // e.g. "subdevices:1:state:power:value"
 
         std::vector<std::string> getDevices(const PhosconGW& gw) const;
+        std::string getDeviceName   (const PhosconGW& gw, const std::string& device) const { return getValueFromPath(gw, device, "name"); }
         std::string getDeviceSummary(const PhosconGW& gw, const std::string& device) const;
 
         std::map<std::string, JsonCpp::JsonObject> getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const;
