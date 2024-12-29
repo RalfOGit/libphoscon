@@ -63,11 +63,15 @@ namespace libphoscon {
         const std::string unlockApi(const PhosconGW& gw, const std::string & devicetype);
 
         // Get accessor methods.
-        std::string getValueFromPath(const PhosconGW& gw, const std::string& device, const std::string& path) const;   // e.g. "subdevices:1:state:power:value"
+        JsonCpp::JsonValue getJsonValueFromPath(const PhosconGW& gw, const std::string& deviceid, const std::string& path) const;   // e.g. "subdevices:1:state:power:value"
+        std::string        getValueFromPath    (const PhosconGW& gw, const std::string& deviceid, const std::string& path) const {
+            return std::string(getJsonValueFromPath(gw, deviceid, path));
+        }
 
-        std::vector<std::string> getDevices(const PhosconGW& gw) const;
-        std::string getDeviceName   (const PhosconGW& gw, const std::string& device) const { return getValueFromPath(gw, device, "name"); }
-        std::string getDeviceSummary(const PhosconGW& gw, const std::string& device) const;
+        std::vector<std::string>  getDevices      (const PhosconGW& gw) const;
+        std::string               getDeviceName   (const PhosconGW& gw, const std::string& deviceid) const { return getValueFromPath(gw, deviceid, "name"); }
+        std::vector <std::string> getDeviceTypes  (const PhosconGW& gw, const std::string& deviceid) const;
+        std::string               getDeviceSummary(const PhosconGW& gw, const std::string& deviceid) const;
 
         std::map<std::string, JsonCpp::JsonObject> getEntityObjects(const PhosconGW& gw, const std::string& qualifier) const;
 

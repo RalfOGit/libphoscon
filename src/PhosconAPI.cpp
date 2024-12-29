@@ -160,13 +160,13 @@ std::vector<std::string> PhosconAPI::getDevices(const PhosconGW& gw) const {
 
 
 /**
- * Get a summary list of all zigbee devices connected to the gateway.
+ * Get a list of subdevice types for the given zigbee device.
  * @param gw phoscon gateway
  * @param device device identifier
- * @return a summary string
+ * @return a list of subdevice types string
  */
-std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string& deviceid) const {
-    std::string summary;
+std::vector <std::string> PhosconAPI::getDeviceTypes(const PhosconGW& gw, const std::string& deviceid) const {
+    std::vector <std::string> types;
 
     // send http get api request
     std::string response, content;
@@ -180,21 +180,32 @@ std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string&
         if (json != NULL && json->type == json_object) {
             JsonCpp::JsonObject device(json);
 
-            std::string name = device["name"];
-            summary.append(name).append(" - ");
-
-            summary.append("subdevices: ");
             JsonCpp::JsonArray subdevices = device["subdevices"].asArray();
             for (auto subdevice : subdevices) {
                 // traverse subdevice properties
                 if (subdevice.isObject()) {
                     JsonCpp::JsonObject props = subdevice.asObject();
-                    std::string type = props["type"];
-                    summary.append(type).append("  ");
+                    std::string type = std::string(props["type"]);
+                    types.push_back(type);
                 }
             }
         }
         json_value_free(json);
+    }
+    return types;
+}
+
+
+/**
+ * Get a device summary for the given zigbee device.
+ * @param gw phoscon gateway
+ * @param device device identifier
+ * @return a summary string
+ */
+std::string PhosconAPI::getDeviceSummary(const PhosconGW& gw, const std::string& deviceid) const {
+    std::string summary = getDeviceName(gw, deviceid) + " - subdevices: ";
+    for (const auto& type : getDeviceTypes(gw, deviceid)) {
+        summary.append(type).append("  ");
     }
     return summary;
 }
@@ -232,20 +243,19 @@ std::map<std::string, JsonCpp::JsonObject> PhosconAPI::getEntityObjects(const Ph
 
 
 /**
- * Get the value for the given key path from the phoscon device; the value is converted to a string.
- * The key path is a string containing path segments, separated by ':' characters. The path is defining
- * the traversal through the result of a "Status 0" command to the phoscon device.
+ * Get the json value for the given key path from the phoscon device.
+ * The key path is a string containing path segments, separated by ':' characters. E.g. a path of "subdevices:1:state:power:value" get the power consumption.
  * @param gw phoscon gateway
- * @param device zigbee device id
- * @param path the path to the leaf key value pair. e.g. "subdevices:1:state:power:value" to get the power consumption
- * @return the value of the leaf key value pair
+ * @param deviceid zigbee device id
+ * @param path the path to the leaf key value pair or the array element.
+ * @return the value of the leaf key value pair or array element
  */
-std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string& device, const std::string& path) const {
-    std::string result;
+JsonCpp::JsonValue PhosconAPI::getJsonValueFromPath(const PhosconGW& gw, const std::string& deviceid, const std::string& path) const {
+    JsonCpp::JsonValue result;
 
     // send http get api request
     std::string response, content;
-    int http_return_code = HttpClient().sendHttpGetRequest(gw.getApiUrl() + "devices/" + device, response, content);
+    int http_return_code = HttpClient().sendHttpGetRequest(gw.getApiUrl() + "devices/" + deviceid, response, content);
 
     if (http_return_code == 200) {
         // parse json content
@@ -283,9 +293,16 @@ std::string PhosconAPI::getValueFromPath(const PhosconGW& gw, const std::string&
                     }
                 }
             }
-            if (path_segments.size() > 0 && traveler.isObject()) {
-                JsonCpp::JsonValue leaf = JsonCpp::getValue(traveler.asObject(), path_segments[path_segments.size() - 1], NameComparator::compare_leaf_names);
-                result = std::string(leaf);
+            if (path_segments.size() > 0) {
+                if (traveler.isObject()) {
+                    result = JsonCpp::getValue(traveler.asObject(), path_segments[path_segments.size() - 1], NameComparator::compare_leaf_names);
+                }
+                else if (traveler.isArray()) {
+                    unsigned int index = 0;
+                    if (sscanf(path_segments[path_segments.size() - 1].c_str(), "%u", &index) == 1 && index < traveler.asArray().size()) {
+                        result = traveler.asArray()[index];
+                    }
+                }
             }
         }
         json_value_free(json);

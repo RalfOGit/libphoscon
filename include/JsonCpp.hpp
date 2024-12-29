@@ -225,7 +225,7 @@ namespace libralfogit {
                 value_int(jvalue),
                 value_double(jvalue),
                 type(jvalue != NULL ? jvalue->type : json_none) {}
-            JsonValue(const json_object_entry* const jvalue = NULL) :
+            JsonValue(const json_object_entry* const jvalue) :
                 value_object(jvalue),
                 value_array(jvalue),
                 value_string(jvalue),
